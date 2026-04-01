@@ -183,7 +183,7 @@ export default function PipelinePage() {
                   style={{ border: '1px solid #e8ebf4' }}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold" style={{ color: '#1a1f2e' }}>{quote.title}</span>
+                      <a href={`/pipeline/${quote.id}`} className="text-xs font-bold hover:underline" style={{ color: '#1a1f2e' }}>{quote.title}</a>
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize"
                         style={{
                           backgroundColor: quote.status === 'sent' ? '#dbeafe' : quote.status === 'accepted' ? '#dcfce7' : '#f2f4f9',

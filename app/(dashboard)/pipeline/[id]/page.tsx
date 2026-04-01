@@ -4,8 +4,10 @@ import { getTerms } from '@/lib/terminology'
 import StatusPill from '@/components/shared/StatusPill'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import Link from 'next/link'
+import QuoteDetail from './QuoteDetail'
+import type { Quote } from '@/types'
 
-export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PipelineDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -14,6 +16,33 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const { data: profile } = await supabase.from('profiles').select('*, organizations(*)').eq('id', user.id).single()
   if (!profile?.org_id) redirect('/onboarding')
 
+  // Try quote first
+  const { data: quote } = await supabase
+    .from('quotes')
+    .select('*, contacts(id, name)')
+    .eq('id', id)
+    .eq('org_id', profile.org_id)
+    .single()
+
+  if (quote) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-5">
+        <div className="flex items-center gap-2 text-xs" style={{ color: '#8891aa' }}>
+          <Link href="/pipeline" style={{ color: '#1e3a5f' }}>Pipeline</Link>
+          <span>/</span>
+          <span>Quotes</span>
+          <span>/</span>
+          <span>{quote.title}</span>
+        </div>
+        <QuoteDetail
+          quote={quote as Quote & { contacts: { id: string; name: string } | null }}
+          orgId={profile.org_id}
+        />
+      </div>
+    )
+  }
+
+  // Fall back to job detail
   const [{ data: job }, { data: documents }] = await Promise.all([
     supabase.from('jobs').select('*, contacts(*), profiles(full_name)').eq('id', id).eq('org_id', profile.org_id).single(),
     supabase.from('documents').select('*').eq('job_id', id).eq('org_id', profile.org_id),

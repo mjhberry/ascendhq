@@ -37,14 +37,14 @@ export default async function DashboardPage() {
     { data: recentContacts },
   ] = await Promise.all([
     supabase.from('jobs').select('*', { count: 'exact', head: true })
-      .eq('org_id', orgId).in('status', ['new', 'scheduled', 'in_progress', 'review']),
+      .eq('org_id', orgId).in('status', ['accepted', 'in_progress']),
     supabase.from('invoices').select('total').eq('org_id', orgId)
       .eq('status', 'paid').gte('paid_at', startOfMonth),
     supabase.from('invoices').select('total').eq('org_id', orgId).eq('status', 'overdue'),
     supabase.from('leads').select('*', { count: 'exact', head: true })
       .eq('org_id', orgId).eq('status', 'new'),
     supabase.from('jobs').select('*, contacts(name)').eq('org_id', orgId)
-      .not('status', 'in', '(complete,cancelled)').order('created_at', { ascending: false }).limit(20),
+      .not('status', 'in', '(complete,invoiced,cancelled)').order('created_at', { ascending: false }).limit(20),
     supabase.from('jobs').select('id, title, created_at').eq('org_id', orgId)
       .order('created_at', { ascending: false }).limit(3),
     supabase.from('contacts').select('id, name, created_at').eq('org_id', orgId)
@@ -119,7 +119,7 @@ export default async function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold" style={{ color: '#1a1f2e' }}>{terms.jobs} Board</h2>
-          <a href="/jobs" className="text-xs font-semibold" style={{ color: '#1e3a5f' }}>View all →</a>
+          <a href="/pipeline" className="text-xs font-semibold" style={{ color: '#1e3a5f' }}>View all →</a>
         </div>
         <KanbanBoard jobs={(jobs as Job[]) ?? []} jobLabel={terms.job} />
       </div>

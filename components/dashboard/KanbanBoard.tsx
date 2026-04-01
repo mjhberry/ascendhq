@@ -32,7 +32,7 @@ export default function KanbanBoard({ jobs, jobLabel }: KanbanBoardProps) {
             </div>
             <div className="space-y-2">
               {colJobs.map(job => (
-                <Link key={job.id} href={`/jobs/${job.id}`}
+                <Link key={job.id} href={`/pipeline/${job.id}`}
                   className="block rounded-lg p-3 bg-white transition-all hover:shadow-sm"
                   style={{ border: '1px solid #e8ebf4' }}>
                   <div className="text-xs font-semibold mb-1 truncate" style={{ color: '#1a1f2e' }}>{job.title}</div>

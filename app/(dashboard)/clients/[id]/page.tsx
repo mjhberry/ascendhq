@@ -95,7 +95,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         {(jobs ?? []).length === 0
           ? <div className="py-8 text-center text-xs" style={{ color: '#8891aa' }}>No {terms.jobs.toLowerCase()} yet</div>
           : (jobs ?? []).map(j => (
-            <Link key={j.id} href={`/jobs/${j.id}`}
+            <Link key={j.id} href={`/pipeline/${j.id}`}
               className="flex items-center justify-between px-4 py-3 transition-colors"
               style={{ borderBottom: '1px solid #f2f4f9' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fc')}

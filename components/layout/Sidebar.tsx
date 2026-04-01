@@ -7,7 +7,7 @@ import type { Organization, Profile } from '@/types'
 const mainNav = (terms: ReturnType<typeof getTerms>) => [
   { href: '/dashboard', label: 'Home',        icon: '🏠' },
   { href: '/clients',   label: terms.clients, icon: '👥' },
-  { href: '/jobs',      label: terms.jobs,    icon: terms.jobIcon },
+  { href: '/pipeline',  label: 'Pipeline',    icon: '⚡' },
   { href: '/schedule',  label: terms.schedule, icon: '📅' },
   { href: '/billing',   label: 'Billing',     icon: '💰' },
   { href: '/documents', label: 'Documents',   icon: '📁' },

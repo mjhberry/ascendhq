@@ -43,7 +43,34 @@ export interface Contact {
   created_at: string
 }
 
-export type JobStatus = 'new' | 'scheduled' | 'in_progress' | 'review' | 'complete' | 'cancelled'
+export type JobStatus = 'accepted' | 'in_progress' | 'complete' | 'invoiced' | 'cancelled'
+
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'declined' | 'converted'
+
+export interface QuoteLineItem {
+  description: string
+  quantity: number
+  unit_price: number
+}
+
+export interface Quote {
+  id: string
+  org_id: string
+  contact_id: string | null
+  title: string
+  description: string | null
+  status: QuoteStatus
+  line_items: QuoteLineItem[]
+  subtotal: number
+  tax: number
+  total: number
+  valid_until: string | null
+  accepted_at: string | null
+  job_id: string | null
+  notes: string | null
+  created_at: string
+  contacts?: { name: string }
+}
 export type JobPriority = 'low' | 'normal' | 'high' | 'urgent'
 
 export interface Job {

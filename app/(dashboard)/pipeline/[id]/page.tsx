@@ -27,7 +27,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs" style={{ color: '#8891aa' }}>
-        <Link href="/jobs" style={{ color: '#1e3a5f' }}>{terms.jobs}</Link>
+        <Link href="/pipeline" style={{ color: '#1e3a5f' }}>Pipeline</Link>
         <span>/</span>
         <span>{job.title}</span>
       </div>

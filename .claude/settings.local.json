@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(xargs cat:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(rm \"C:/Users/Dell Latitude/ascendhq/app/\\(dashboard\\)/jobs/page.tsx\" \"C:/Users/Dell Latitude/ascendhq/app/\\(dashboard\\)/jobs/[id]/page.tsx\")",
+      "Bash(rmdir \"C:/Users/Dell Latitude/ascendhq/app/\\(dashboard\\)/jobs/[id]\")",
+      "Bash(ls \"C:/Users/Dell Latitude/ascendhq/app/\\(dashboard\\)/jobs\")"
     ]
   }
 }

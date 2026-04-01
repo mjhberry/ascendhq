@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { slugify } from '@/lib/utils'
 
 type Category = 'home' | 'pro'
 
@@ -49,28 +48,27 @@ export default function OnboardingPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { router.push('/login'); return }
 
-    // Create org
-    const slug = slugify(businessName) + '-' + Math.random().toString(36).slice(2, 6)
-    const { data: org, error: orgErr } = await supabase
-      .from('organizations')
-      .insert({ name: businessName, industry, category, slug })
-      .select().single()
-
-    if (orgErr || !org) { setError(orgErr?.message ?? 'Failed to create organization.'); setLoading(false); return }
-
-    // Create profile
-    const { error: profileErr } = await supabase.from('profiles').upsert({
-      id: user.id,
-      org_id: org.id,
-      full_name: fullName,
-      email: user.email,
-      role,
+    const res = await fetch('/api/onboarding', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        name: businessName,
+        industry,
+        category,
+        role,
+        full_name: fullName,
+        email: session.user.email,
+      }),
     })
 
-    if (profileErr) { setError(profileErr.message); setLoading(false); return }
+    const data = await res.json()
+    if (!res.ok) { setError(data.error ?? 'Something went wrong.'); setLoading(false); return }
     router.push('/')
   }
 

@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Quote, QuoteLineItem } from '@/types'
 
-type QuoteWithContact = Quote & { contacts: { id: string; name: string } | null }
+type QuoteWithContact = Quote & { contacts: { id: string; name: string; email: string | null } | null }
 
 interface QuoteDetailProps {
   quote: QuoteWithContact
@@ -48,6 +48,12 @@ export default function QuoteDetail({ quote: initialQuote, orgId }: QuoteDetailP
   const [actioning, setActioning] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // Send-to-client form state
+  const [showSendForm, setShowSendForm] = useState(false)
+  const [sendClientName, setSendClientName] = useState(quote.client_name ?? quote.contacts?.name ?? '')
+  const [sendClientEmail, setSendClientEmail] = useState(quote.client_email ?? quote.contacts?.email ?? '')
+  const [sending, setSending] = useState(false)
 
   // Live totals for edit mode
   const editSubtotal = lineItems.reduce((sum, li) => sum + li.quantity * li.unit_price, 0)
@@ -100,18 +106,34 @@ export default function QuoteDetail({ quote: initialQuote, orgId }: QuoteDetailP
     setSaving(false)
   }
 
-  async function doAction(action: 'send' | 'accept' | 'decline' | 'delete' | 'convert') {
+  async function handleSendEmail() {
+    if (!sendClientEmail.trim()) { setError('Client email is required'); return }
+    setSending(true)
+    setError('')
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch('/api/quotes/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({ quoteId: quote.id, clientName: sendClientName, clientEmail: sendClientEmail }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setError(data.error ?? 'Failed to send email'); setSending(false); return }
+    // Refresh quote state to reflect sent status
+    const { data: updated } = await supabase
+      .from('quotes').select('*, contacts(id, name, email)').eq('id', quote.id).single()
+    if (updated) setQuote(updated as QuoteWithContact)
+    setShowSendForm(false)
+    setSending(false)
+  }
+
+  async function doAction(action: 'accept' | 'decline' | 'delete' | 'convert') {
     setActioning(action)
     setError('')
     const supabase = createClient()
-
-    if (action === 'send') {
-      const { data, error: err } = await supabase
-        .from('quotes').update({ status: 'sent' }).eq('id', quote.id)
-        .select('*, contacts(id, name)').single()
-      if (!err && data) setQuote(data as QuoteWithContact)
-      else if (err) setError(err.message)
-    }
 
     if (action === 'accept') {
       const { data, error: err } = await supabase
@@ -339,6 +361,42 @@ export default function QuoteDetail({ quote: initialQuote, orgId }: QuoteDetailP
         </div>
       )}
 
+      {/* Send-to-client form */}
+      {showSendForm && (
+        <div className="rounded-xl p-5 bg-white" style={{ border: '1px solid #e8ebf4' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold" style={{ color: '#1a1f2e' }}>Send Quote to Client</h3>
+            <button onClick={() => { setShowSendForm(false); setError('') }} className="text-xs" style={{ color: '#8891aa' }}>✕</button>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={labelStyle}>Client Name</label>
+              <input value={sendClientName} onChange={e => setSendClientName(e.target.value)}
+                placeholder="e.g. Jane Smith"
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none" style={inputStyle} />
+            </div>
+            <div>
+              <label className="text-xs font-semibold block mb-1.5" style={labelStyle}>Client Email *</label>
+              <input type="email" value={sendClientEmail} onChange={e => setSendClientEmail(e.target.value)}
+                placeholder="client@example.com"
+                className="w-full px-3 py-2 rounded-lg text-sm outline-none" style={inputStyle} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button onClick={() => { setShowSendForm(false); setError('') }}
+              className="px-4 py-2 rounded-lg text-xs font-semibold"
+              style={{ backgroundColor: '#f8f9fc', color: '#454d66', border: '1px solid #e8ebf4' }}>
+              Cancel
+            </button>
+            <button onClick={handleSendEmail} disabled={sending}
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-white disabled:opacity-60"
+              style={{ backgroundColor: '#2563eb' }}>
+              {sending ? 'Sending…' : '📧 Send Email'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Action bar */}
       <div className="rounded-xl p-4 bg-white flex items-center justify-between" style={{ border: '1px solid #e8ebf4' }}>
         <a href="/pipeline" className="text-xs font-semibold" style={{ color: '#8891aa' }}>← Back to Pipeline</a>
@@ -383,10 +441,10 @@ export default function QuoteDetail({ quote: initialQuote, orgId }: QuoteDetailP
                       Delete
                     </button>
                   )}
-                  <button onClick={() => doAction('send')} disabled={actioning === 'send'}
-                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white disabled:opacity-60"
+                  <button onClick={() => setShowSendForm(true)}
+                    className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
                     style={{ backgroundColor: '#2563eb' }}>
-                    {actioning === 'send' ? '…' : 'Send to Client'}
+                    Send to Client
                   </button>
                   <button onClick={openEdit}
                     className="px-4 py-2 rounded-lg text-xs font-semibold text-white"

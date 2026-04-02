@@ -5,6 +5,7 @@ import StatusPill from '@/components/shared/StatusPill'
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils'
 import Link from 'next/link'
 import QuoteDetail from './QuoteDetail'
+import DocumentUpload from '@/components/documents/DocumentUpload'
 import type { Quote } from '@/types'
 
 export default async function PipelineDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +20,7 @@ export default async function PipelineDetailPage({ params }: { params: Promise<{
   // Try quote first
   const { data: quote } = await supabase
     .from('quotes')
-    .select('*, contacts(id, name)')
+    .select('*, contacts(id, name, email)')
     .eq('id', id)
     .eq('org_id', profile.org_id)
     .single()
@@ -35,7 +36,7 @@ export default async function PipelineDetailPage({ params }: { params: Promise<{
           <span>{quote.title}</span>
         </div>
         <QuoteDetail
-          quote={quote as Quote & { contacts: { id: string; name: string } | null }}
+          quote={quote as Quote & { contacts: { id: string; name: string; email: string | null } | null }}
           orgId={profile.org_id}
         />
       </div>
@@ -43,10 +44,12 @@ export default async function PipelineDetailPage({ params }: { params: Promise<{
   }
 
   // Fall back to job detail
-  const [{ data: job }, { data: documents }] = await Promise.all([
-    supabase.from('jobs').select('*, contacts(*), profiles(full_name)').eq('id', id).eq('org_id', profile.org_id).single(),
-    supabase.from('documents').select('*').eq('job_id', id).eq('org_id', profile.org_id),
-  ])
+  const { data: job } = await supabase
+    .from('jobs')
+    .select('*, contacts(*), profiles(full_name)')
+    .eq('id', id)
+    .eq('org_id', profile.org_id)
+    .single()
 
   if (!job) notFound()
 
@@ -119,26 +122,13 @@ export default async function PipelineDetailPage({ params }: { params: Promise<{
       </div>
 
       {/* Documents */}
-      <div className="rounded-xl bg-white" style={{ border: '1px solid #e8ebf4' }}>
-        <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid #e8ebf4' }}>
-          <h2 className="text-sm font-bold" style={{ color: '#1a1f2e' }}>Documents</h2>
-          <span className="text-xs" style={{ color: '#8891aa' }}>{documents?.length ?? 0}</span>
-        </div>
-        {(documents ?? []).length === 0
-          ? <div className="py-8 text-center text-xs" style={{ color: '#8891aa' }}>No documents attached</div>
-          : (documents ?? []).map(doc => (
-            <div key={doc.id} className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #f2f4f9' }}>
-              <div className="flex items-center gap-3">
-                <span className="text-lg">📄</span>
-                <div>
-                  <div className="text-xs font-semibold" style={{ color: '#1a1f2e' }}>{doc.name}</div>
-                  <div className="text-[10px]" style={{ color: '#8891aa' }}>{doc.type ?? 'other'}</div>
-                </div>
-              </div>
-              <div className="text-xs" style={{ color: '#8891aa' }}>{formatDate(doc.created_at)}</div>
-            </div>
-          ))
-        }
+      <div className="rounded-xl bg-white p-4" style={{ border: '1px solid #e8ebf4' }}>
+        <h2 className="text-sm font-bold mb-4" style={{ color: '#1a1f2e' }}>Documents</h2>
+        <DocumentUpload
+          orgId={profile.org_id}
+          userId={user.id}
+          jobId={id}
+        />
       </div>
     </div>
   )

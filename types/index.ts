@@ -68,6 +68,10 @@ export interface Quote {
   accepted_at: string | null
   job_id: string | null
   notes: string | null
+  token: string | null
+  client_name: string | null
+  client_email: string | null
+  sent_at?: string | null
   created_at: string
   contacts?: { name: string }
 }
@@ -145,7 +149,9 @@ export interface Document {
   name: string
   type: 'contract' | 'permit' | 'photo' | 'proposal' | 'warranty' | 'other' | null
   storage_path: string | null
+  file_url: string | null
   size_bytes: number | null
+  uploaded_by: string | null
   created_at: string
 }
 

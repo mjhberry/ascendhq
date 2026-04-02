@@ -4,6 +4,7 @@ import { getTerms } from '@/lib/terminology'
 import StatusPill from '@/components/shared/StatusPill'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import DocumentUpload from '@/components/documents/DocumentUpload'
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -114,6 +115,16 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             </Link>
           ))
         }
+      </div>
+
+      {/* Documents */}
+      <div className="rounded-xl bg-white p-4" style={{ border: '1px solid #e8ebf4' }}>
+        <h2 className="text-sm font-bold mb-4" style={{ color: '#1a1f2e' }}>Documents</h2>
+        <DocumentUpload
+          orgId={profile.org_id}
+          userId={user.id}
+          contactId={id}
+        />
       </div>
 
       {/* Invoices */}

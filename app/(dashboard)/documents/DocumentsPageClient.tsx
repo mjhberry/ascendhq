@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { formatDate } from '@/lib/utils'
 import DocumentUpload from '@/components/documents/DocumentUpload'
+import DocumentPreview from '@/components/documents/DocumentPreview'
 import type { Document } from '@/types'
 
 type DocType = 'contract' | 'permit' | 'photo' | 'proposal' | 'warranty' | 'other'
@@ -32,6 +33,7 @@ export default function DocumentsPageClient({ documents: initialDocs, orgId, use
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<DocType | 'all'>('all')
   const [showUpload, setShowUpload] = useState(false)
+  const [previewDoc, setPreviewDoc] = useState<DocWithRelations | null>(null)
 
   const filtered = initialDocs.filter(doc => {
     const matchesSearch = !search ||
@@ -166,16 +168,25 @@ export default function DocumentsPageClient({ documents: initialDocs, orgId, use
                     {formatDate(doc.created_at)}
                   </td>
                   <td className="px-4 py-3">
-                    {doc.file_url && (
-                      <a
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 11, color: '#1e3a5f', border: '1px solid #e8ebf4', borderRadius: 6, padding: '3px 8px', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <button
+                        onClick={() => setPreviewDoc(doc)}
+                        title="Preview"
+                        style={{ fontSize: 13, background: 'none', border: '1px solid #e8ebf4', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', color: '#454d66', lineHeight: 1 }}
                       >
-                        Download
-                      </a>
-                    )}
+                        👁
+                      </button>
+                      {doc.file_url && (
+                        <a
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: 11, color: '#1e3a5f', border: '1px solid #e8ebf4', borderRadius: 6, padding: '3px 8px', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                        >
+                          Download
+                        </a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -183,6 +194,10 @@ export default function DocumentsPageClient({ documents: initialDocs, orgId, use
           </table>
         )}
       </div>
+
+      {previewDoc && (
+        <DocumentPreview doc={previewDoc} onClose={() => setPreviewDoc(null)} />
+      )}
     </div>
   )
 }

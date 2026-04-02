@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import DocumentPreview from './DocumentPreview'
 import type { Document } from '@/types'
 
 type DocType = 'contract' | 'permit' | 'photo' | 'proposal' | 'warranty' | 'other'
@@ -48,6 +49,7 @@ export default function DocumentUpload({ orgId, userId, jobId, contactId }: Prop
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [pendingType, setPendingType] = useState<DocType>('other')
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [previewDoc, setPreviewDoc] = useState<Document | null>(null)
 
   const fileRef = useRef<HTMLInputElement>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
@@ -300,6 +302,13 @@ export default function DocumentUpload({ orgId, userId, jobId, contactId }: Prop
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 12 }}>
+                <button
+                  onClick={() => setPreviewDoc(doc)}
+                  title="Preview"
+                  style={{ fontSize: 13, background: 'none', border: '1px solid #e8ebf4', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', color: '#454d66', lineHeight: 1 }}
+                >
+                  👁
+                </button>
                 {doc.file_url && (
                   <a
                     href={doc.file_url}
@@ -321,6 +330,10 @@ export default function DocumentUpload({ orgId, userId, jobId, contactId }: Prop
             </div>
           ))}
         </div>
+      )}
+
+      {previewDoc && (
+        <DocumentPreview doc={previewDoc} onClose={() => setPreviewDoc(null)} />
       )}
     </div>
   )

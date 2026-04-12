@@ -85,6 +85,31 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#8891aa' }}>Added</div>
             <div className="text-xs" style={{ color: '#1a1f2e' }}>{formatDate(contact.created_at)}</div>
           </div>
+          {contact.address_line1 && (() => {
+            const parts = [
+              contact.address_line1,
+              contact.address_line2,
+              [contact.city, contact.state].filter(Boolean).join(', '),
+              contact.zip,
+            ].filter(Boolean)
+            const formatted = parts.join(', ')
+            const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(formatted)}`
+            return (
+              <div style={{ gridColumn: contact.email && contact.phone ? '1 / -1' : undefined }}>
+                <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#8891aa' }}>Address</div>
+                <div className="text-xs" style={{ color: '#1a1f2e' }}>{formatted}</div>
+                <a
+                  href={mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] mt-1 inline-block"
+                  style={{ color: '#1e3a5f' }}
+                >
+                  View on Map ↗
+                </a>
+              </div>
+            )
+          })()}
         </div>
 
         {contact.notes && (

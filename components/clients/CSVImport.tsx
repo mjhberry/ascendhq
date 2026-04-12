@@ -9,6 +9,7 @@ type Step = 'upload' | 'mapping' | 'importing' | 'results'
 type AscendField =
   | 'name' | 'first_name' | 'last_name'
   | 'email' | 'phone' | 'company' | 'type' | 'notes'
+  | 'address_line1' | 'address_line2' | 'city' | 'state' | 'zip'
   | 'skip'
 
 interface MappedContact {
@@ -18,6 +19,11 @@ interface MappedContact {
   company?: string
   type?: string
   notes?: string
+  address_line1?: string
+  address_line2?: string
+  city?: string
+  state?: string
+  zip?: string
 }
 
 interface ImportError { row: number; name: string; reason: string }
@@ -31,20 +37,26 @@ interface ImportResult {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ASCEND_FIELD_OPTIONS: { value: AscendField; label: string }[] = [
-  { value: 'skip',       label: 'Skip this column' },
-  { value: 'name',       label: 'Name (Full)' },
-  { value: 'first_name', label: 'First Name' },
-  { value: 'last_name',  label: 'Last Name' },
-  { value: 'email',      label: 'Email' },
-  { value: 'phone',      label: 'Phone' },
-  { value: 'company',    label: 'Company' },
-  { value: 'type',       label: 'Type (residential / commercial)' },
-  { value: 'notes',      label: 'Notes' },
+  { value: 'skip',         label: 'Skip this column' },
+  { value: 'name',         label: 'Name (Full)' },
+  { value: 'first_name',   label: 'First Name' },
+  { value: 'last_name',    label: 'Last Name' },
+  { value: 'email',        label: 'Email' },
+  { value: 'phone',        label: 'Phone' },
+  { value: 'company',      label: 'Company' },
+  { value: 'type',         label: 'Type (residential / commercial)' },
+  { value: 'notes',        label: 'Notes' },
+  { value: 'address_line1', label: 'Address Line 1' },
+  { value: 'address_line2', label: 'Address Line 2' },
+  { value: 'city',         label: 'City' },
+  { value: 'state',        label: 'State' },
+  { value: 'zip',          label: 'ZIP Code' },
 ]
 
 const PREVIEW_FIELD_LABELS: Record<string, string> = {
   name: 'Name', email: 'Email', phone: 'Phone',
   company: 'Company', type: 'Type', notes: 'Notes',
+  address_line1: 'Address', city: 'City', state: 'State', zip: 'ZIP',
 }
 
 // ─── CSV parser ───────────────────────────────────────────────────────────────
@@ -93,6 +105,11 @@ function autoMapColumn(header: string): AscendField {
   if (/^(company|company name|organization|organisation|business|employer)$/.test(h)) return 'company'
   if (/^(type|contact type|client type)$/.test(h)) return 'type'
   if (/^(notes|note|comments|comment|description|memo)$/.test(h)) return 'notes'
+  if (/^(address|address line 1|address1|street|street address)$/.test(h)) return 'address_line1'
+  if (/^(address line 2|address2|suite|apt|unit)$/.test(h)) return 'address_line2'
+  if (/^(city|town|locality)$/.test(h)) return 'city'
+  if (/^(state|province|region|state province)$/.test(h)) return 'state'
+  if (/^(zip|zip code|postal code|postcode)$/.test(h)) return 'zip'
   return 'skip'
 }
 
@@ -241,7 +258,9 @@ export default function CSVImport({ onClose, onComplete }: CSVImportProps) {
     return c.name?.trim()
   }).length
   const previewRows = rows.slice(0, 3).map(row => applyMapping(row, headers, mapping))
-  const previewFields = (['name', 'email', 'phone', 'company'] as const).filter(f =>
+  const previewFields = (
+    ['name', 'email', 'phone', 'company', 'address_line1', 'city', 'state', 'zip'] as const
+  ).filter(f =>
     Object.values(mapping).some(v =>
       v === f || (f === 'name' && (v === 'first_name' || v === 'last_name'))
     )

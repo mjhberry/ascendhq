@@ -33,6 +33,27 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 6,
 }
 
+const sectionHeadingStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  color: '#8891aa',
+  gridColumn: '1 / -1',
+  paddingTop: 4,
+  borderTop: '1px solid #f2f4f9',
+  marginTop: 4,
+}
+
+const US_STATES = [
+  '', 'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
+  'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+  'DC',
+]
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
@@ -47,6 +68,11 @@ export default function ClientForm({ orgId, clientLabel, initial, onClose, onSav
     type: initial?.type ?? 'residential',
     status: initial?.status ?? 'active',
     notes: initial?.notes ?? '',
+    address_line1: initial?.address_line1 ?? '',
+    address_line2: initial?.address_line2 ?? '',
+    city: initial?.city ?? '',
+    state: initial?.state ?? '',
+    zip: initial?.zip ?? '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -72,6 +98,11 @@ export default function ClientForm({ orgId, clientLabel, initial, onClose, onSav
       type: form.type,
       status: form.status,
       notes: form.notes.trim() || null,
+      address_line1: form.address_line1.trim() || null,
+      address_line2: form.address_line2.trim() || null,
+      city: form.city.trim() || null,
+      state: form.state || null,
+      zip: form.zip.trim() || null,
     }
 
     if (isEdit) {
@@ -140,6 +171,8 @@ export default function ClientForm({ orgId, clientLabel, initial, onClose, onSav
         <form onSubmit={handleSubmit} style={{ overflowY: 'auto', flex: 1 }}>
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+
+              {/* Contact info */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Name *</label>
                 <input
@@ -181,27 +214,71 @@ export default function ClientForm({ orgId, clientLabel, initial, onClose, onSav
               </div>
               <div>
                 <label style={labelStyle}>Type</label>
-                <select
-                  value={form.type}
-                  onChange={e => set('type', e.target.value)}
-                  style={inputStyle}
-                >
+                <select value={form.type} onChange={e => set('type', e.target.value)} style={inputStyle}>
                   <option value="residential">Residential</option>
                   <option value="commercial">Commercial</option>
                 </select>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Status</label>
-                <select
-                  value={form.status}
-                  onChange={e => set('status', e.target.value)}
-                  style={{ ...inputStyle, maxWidth: 200 }}
-                >
+                <select value={form.status} onChange={e => set('status', e.target.value)} style={{ ...inputStyle, maxWidth: 200 }}>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                   <option value="lead">Lead</option>
                 </select>
               </div>
+
+              {/* Address section */}
+              <div style={sectionHeadingStyle}>Address</div>
+
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Address Line 1</label>
+                <input
+                  value={form.address_line1}
+                  onChange={e => set('address_line1', e.target.value)}
+                  placeholder="123 Main St"
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Address Line 2 <span style={{ fontWeight: 400, textTransform: 'none' }}>(optional)</span></label>
+                <input
+                  value={form.address_line2}
+                  onChange={e => set('address_line2', e.target.value)}
+                  placeholder="Suite 100, Apt B…"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>City</label>
+                <input
+                  value={form.city}
+                  onChange={e => set('city', e.target.value)}
+                  placeholder="Hartford"
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={labelStyle}>State</label>
+                  <select value={form.state} onChange={e => set('state', e.target.value)} style={inputStyle}>
+                    {US_STATES.map(s => (
+                      <option key={s} value={s}>{s || '—'}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>ZIP</label>
+                  <input
+                    value={form.zip}
+                    onChange={e => set('zip', e.target.value)}
+                    placeholder="06101"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Notes</label>
                 <textarea
@@ -251,7 +328,7 @@ export default function ClientForm({ orgId, clientLabel, initial, onClose, onSav
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading ? 'Saving…' : isEdit ? `Save Changes` : `Add ${clientLabel}`}
+              {loading ? 'Saving…' : isEdit ? 'Save Changes' : `Add ${clientLabel}`}
             </button>
           </div>
         </form>

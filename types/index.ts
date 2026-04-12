@@ -40,6 +40,12 @@ export interface Contact {
   notes: string | null
   last_contact_at: string | null
   lifetime_value: number
+  address_line1: string | null
+  address_line2: string | null
+  city: string | null
+  state: string | null
+  zip: string | null
+  country: string | null
   created_at: string
 }
 

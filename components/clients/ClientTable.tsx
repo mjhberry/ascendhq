@@ -41,7 +41,7 @@ export default function ClientTable({ contacts, clientLabel, onEdit, onDelete }:
       <table className="w-full">
         <thead>
           <tr style={{ borderBottom: '1px solid #e8ebf4' }}>
-            {['Name', 'Email', 'Phone', 'Type', 'Status', 'Lifetime Value', 'Added', ''].map(h => (
+            {['Name', 'Email', 'Phone', 'Location', 'Type', 'Status', 'Lifetime Value', 'Added', ''].map(h => (
               <th key={h} className="text-left text-[10px] font-bold uppercase tracking-wider px-4 py-3"
                 style={{ color: '#8891aa', width: h === '' ? 40 : undefined }}>
                 {h}
@@ -65,6 +65,9 @@ export default function ClientTable({ contacts, clientLabel, onEdit, onDelete }:
               </td>
               <td className="px-4 py-3 text-xs" style={{ color: '#454d66' }}>{c.email ?? '—'}</td>
               <td className="px-4 py-3 text-xs" style={{ color: '#454d66', fontFamily: 'var(--font-ibm-plex-mono), monospace' }}>{c.phone ?? '—'}</td>
+              <td className="px-4 py-3 text-xs" style={{ color: '#454d66' }}>
+                {[c.city, c.state].filter(Boolean).join(', ') || '—'}
+              </td>
               <td className="px-4 py-3">
                 <span className="text-[10px] capitalize px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: c.type === 'commercial' ? '#e4eef9' : '#f2f4f9', color: '#454d66' }}>

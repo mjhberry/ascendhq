@@ -5,6 +5,7 @@ import StatusPill from '@/components/shared/StatusPill'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import DocumentUpload from '@/components/documents/DocumentUpload'
+import ClientDetailActions from '@/components/clients/ClientDetailActions'
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -52,11 +53,18 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#8891aa' }}>Lifetime Value</div>
-            <div className="text-xl font-bold" style={{ color: '#16a34a', fontFamily: 'var(--font-ibm-plex-mono), monospace' }}>
-              {formatCurrency(contact.lifetime_value)}
+          <div className="flex flex-col items-end gap-3">
+            <div className="text-right">
+              <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: '#8891aa' }}>Lifetime Value</div>
+              <div className="text-xl font-bold" style={{ color: '#16a34a', fontFamily: 'var(--font-ibm-plex-mono), monospace' }}>
+                {formatCurrency(contact.lifetime_value)}
+              </div>
             </div>
+            <ClientDetailActions
+              contact={contact}
+              orgId={profile.org_id}
+              clientLabel={terms.client}
+            />
           </div>
         </div>
 

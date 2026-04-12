@@ -83,10 +83,13 @@ export default async function AutomationsPage() {
   console.log('AUTOMATIONS PAGE LOADED', { settings, stats: runStats, logs: recentRuns })
 
   return (
+    <>
+    <h1>AUTOMATION ENGINE V2</h1>
     <AutomationsClient
       initialSettings={settings}
       runStats={runStats}
       recentRuns={recentRuns ?? []}
     />
+    </>
   )
 }

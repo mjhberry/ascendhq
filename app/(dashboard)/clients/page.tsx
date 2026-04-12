@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useOrg } from '@/hooks/useOrg'
 import ClientTable from '@/components/clients/ClientTable'
 import ClientForm from '@/components/clients/ClientForm'
+import CSVImport from '@/components/clients/CSVImport'
 import EmptyState from '@/components/shared/EmptyState'
 import LoadingSpinner from '@/components/shared/LoadingSpinner'
 import type { Contact } from '@/types'
@@ -13,6 +14,7 @@ export default function ClientsPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
@@ -39,12 +41,27 @@ export default function ClientsPage() {
           <h1 className="text-xl font-bold" style={{ color: '#1a1f2e' }}>{terms.clients}</h1>
           <p className="text-xs mt-0.5" style={{ color: '#8891aa' }}>{contacts.length} total</p>
         </div>
-        <button onClick={() => setShowForm(true)}
-          className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
-          style={{ backgroundColor: '#1e3a5f' }}>
-          + Add {terms.client}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowImport(true)}
+            className="px-4 py-2 rounded-lg text-xs font-semibold"
+            style={{ backgroundColor: '#f8f9fc', color: '#454d66', border: '1px solid #e8ebf4' }}>
+            Import CSV
+          </button>
+          <button onClick={() => setShowForm(true)}
+            className="px-4 py-2 rounded-lg text-xs font-semibold text-white"
+            style={{ backgroundColor: '#1e3a5f' }}>
+            + Add {terms.client}
+          </button>
+        </div>
       </div>
+
+      {/* CSV Import modal */}
+      {showImport && (
+        <CSVImport
+          onClose={() => setShowImport(false)}
+          onComplete={() => window.location.reload()}
+        />
+      )}
 
       {/* Add form */}
       {showForm && (

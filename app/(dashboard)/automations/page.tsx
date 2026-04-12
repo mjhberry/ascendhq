@@ -80,6 +80,8 @@ export default async function AutomationsPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
+  console.log('AUTOMATIONS PAGE LOADED', { settings, stats: runStats, logs: recentRuns })
+
   return (
     <AutomationsClient
       initialSettings={settings}

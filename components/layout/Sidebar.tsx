@@ -102,6 +102,24 @@ export default function Sidebar({ org, profile }: SidebarProps) {
         })}
 
         <div className="my-2 mx-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }} />
+        {(profile.role === 'owner' || profile.role === 'office') && (() => {
+          const isActive = pathname.startsWith('/settings/team')
+          return (
+            <Link href="/settings/team"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-all mb-0.5"
+              style={{
+                backgroundColor: isActive ? 'rgba(255,255,255,0.12)' : 'transparent',
+                color: isActive ? 'white' : 'rgba(255,255,255,0.5)',
+                fontWeight: isActive ? 600 : 500,
+              }}
+              onMouseEnter={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.85)' } }}
+              onMouseLeave={e => { if (!isActive) { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)' } }}
+            >
+              <span className="text-sm w-4 text-center">👥</span>
+              Team
+            </Link>
+          )
+        })()}
         <Link href="/settings"
           className="flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-all"
           style={{ color: 'rgba(255,255,255,0.5)' }}
@@ -117,7 +135,7 @@ export default function Sidebar({ org, profile }: SidebarProps) {
       <div className="p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-            style={{ backgroundColor: '#3b6cb0', border: '1px solid rgba(255,255,255,0.2)' }}>
+            style={{ backgroundColor: profile.color ?? '#3b6cb0', border: '1px solid rgba(255,255,255,0.2)' }}>
             {profile.full_name?.slice(0, 2).toUpperCase() ?? 'U'}
           </div>
           <div className="min-w-0">

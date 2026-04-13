@@ -24,8 +24,25 @@ export interface Profile {
   email: string | null
   role: OrgRole
   avatar_url: string | null
+  phone: string | null
+  job_title: string | null
+  status: string
+  color: string
   created_at: string
   organizations?: Organization
+}
+
+export interface Invitation {
+  id: string
+  org_id: string
+  email: string
+  role: OrgRole
+  token: string
+  invited_by: string | null
+  accepted_at: string | null
+  expires_at: string
+  created_at: string
+  profiles?: { full_name: string | null }
 }
 
 export interface Contact {

@@ -24,10 +24,12 @@ export default function PipelinePage() {
   const [quotes, setQuotes] = useState<Quote[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
+  const [teamMembers, setTeamMembers] = useState<{ id: string; full_name: string | null; color: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [showQuoteForm, setShowQuoteForm] = useState(false)
   const [converting, setConverting] = useState<string | null>(null)
   const [invoicing, setInvoicing] = useState<string | null>(null)
+  const [assigning, setAssigning] = useState<string | null>(null)
 
   useEffect(() => {
     if (!profile?.org_id) return
@@ -36,15 +38,18 @@ export default function PipelinePage() {
 
   async function fetchData() {
     const supabase = createClient()
-    const [{ data: q }, { data: j }, { data: c }] = await Promise.all([
+    const [{ data: q }, { data: j }, { data: c }, teamRes] = await Promise.all([
       supabase.from('quotes').select('*, contacts(name)').eq('org_id', profile!.org_id).order('created_at', { ascending: false }),
-      supabase.from('jobs').select('*, contacts(name), profiles(full_name)').eq('org_id', profile!.org_id)
+      supabase.from('jobs').select('*, contacts(name), profiles(full_name, color)').eq('org_id', profile!.org_id)
         .in('status', ['accepted', 'in_progress', 'complete', 'invoiced']).order('created_at', { ascending: false }),
       supabase.from('contacts').select('*').eq('org_id', profile!.org_id).order('name'),
+      fetch('/api/team/members'),
     ])
     setQuotes((q as Quote[]) ?? [])
     setJobs((j as Job[]) ?? [])
     setContacts(c ?? [])
+    const teamData = await teamRes.json()
+    setTeamMembers(teamData.members ?? [])
     setLoading(false)
   }
 
@@ -71,6 +76,19 @@ export default function PipelinePage() {
       setActiveTab('accepted')
     }
     setConverting(null)
+  }
+
+  async function assignJob(jobId: string, assignedTo: string | null) {
+    setAssigning(jobId)
+    const res = await fetch('/api/jobs/assign', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_id: jobId, assigned_to: assignedTo }),
+    })
+    if (res.ok) {
+      setJobs(prev => prev.map(j => j.id === jobId ? { ...j, assigned_to: assignedTo } : j))
+    }
+    setAssigning(null)
   }
 
   async function generateInvoice(job: Job) {
@@ -223,38 +241,71 @@ export default function PipelinePage() {
               description="Items will appear here as they move through the pipeline" />
           : (
             <div className="space-y-3">
-              {activeJobs.map(job => (
-                <div key={job.id} className="rounded-xl p-4 bg-white flex items-center gap-4"
-                  style={{ border: '1px solid #e8ebf4' }}>
-                  <div className="flex-1 min-w-0">
-                    <div className="mb-1">
-                      <a href={`/pipeline/${job.id}`} className="text-xs font-bold hover:underline" style={{ color: '#1a1f2e' }}>
-                        {job.title}
-                      </a>
+              {activeJobs.map(job => {
+                const assignee = teamMembers.find(m => m.id === job.assigned_to)
+                return (
+                  <div key={job.id} className="rounded-xl p-4 bg-white flex items-center gap-4"
+                    style={{ border: '1px solid #e8ebf4' }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="mb-1">
+                        <a href={`/pipeline/${job.id}`} className="text-xs font-bold hover:underline" style={{ color: '#1a1f2e' }}>
+                          {job.title}
+                        </a>
+                      </div>
+                      {job.description && (
+                        <p className="text-xs truncate mb-1.5" style={{ color: '#8891aa' }}>{job.description}</p>
+                      )}
+                      <div className="flex items-center gap-3 text-xs" style={{ color: '#8891aa' }}>
+                        {(job.contacts as any)?.name && <span>👤 {(job.contacts as any).name}</span>}
+                        <span>📅 {formatDate(job.scheduled_at ?? job.created_at)}</span>
+                      </div>
                     </div>
-                    {job.description && (
-                      <p className="text-xs truncate mb-1.5" style={{ color: '#8891aa' }}>{job.description}</p>
-                    )}
-                    <div className="flex items-center gap-3 text-xs" style={{ color: '#8891aa' }}>
-                      {(job.contacts as any)?.name && <span>👤 {(job.contacts as any).name}</span>}
-                      {(job.profiles as any)?.full_name && <span>🔧 {(job.profiles as any).full_name}</span>}
-                      <span>📅 {formatDate(job.scheduled_at ?? job.created_at)}</span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {/* Assignee circle + dropdown */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {assignee && (
+                          <div
+                            title={assignee.full_name ?? 'Assigned'}
+                            style={{
+                              width: 26, height: 26, borderRadius: '50%',
+                              backgroundColor: assignee.color ?? '#3b6cb0',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'white', fontSize: 10, fontWeight: 700, flexShrink: 0,
+                            }}
+                          >
+                            {(assignee.full_name ?? 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <select
+                          value={job.assigned_to ?? ''}
+                          disabled={assigning === job.id}
+                          onChange={e => assignJob(job.id, e.target.value || null)}
+                          style={{
+                            fontSize: 11, border: '1px solid #e8ebf4', borderRadius: 6,
+                            padding: '3px 6px', backgroundColor: '#f8f9fc', color: '#454d66',
+                            cursor: 'pointer', outline: 'none',
+                          }}
+                        >
+                          <option value="">Unassigned</option>
+                          {teamMembers.map(m => (
+                            <option key={m.id} value={m.id}>{m.full_name ?? m.id.slice(0, 8)}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <span className="text-sm font-bold" style={{ color: '#16a34a', fontFamily: 'var(--font-ibm-plex-mono), monospace' }}>
+                        {formatCurrency(job.value)}
+                      </span>
+                      {activeTab === 'complete' && (
+                        <button onClick={() => generateInvoice(job)} disabled={invoicing === job.id}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
+                          style={{ backgroundColor: '#16a34a' }}>
+                          {invoicing === job.id ? '…' : 'Generate Invoice'}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-sm font-bold" style={{ color: '#16a34a', fontFamily: 'var(--font-ibm-plex-mono), monospace' }}>
-                      {formatCurrency(job.value)}
-                    </span>
-                    {activeTab === 'complete' && (
-                      <button onClick={() => generateInvoice(job)} disabled={invoicing === job.id}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
-                        style={{ backgroundColor: '#16a34a' }}>
-                        {invoicing === job.id ? '…' : 'Generate Invoice'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )
       )}

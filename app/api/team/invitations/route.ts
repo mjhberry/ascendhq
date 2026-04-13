@@ -74,30 +74,30 @@ export async function POST(req: Request) {
   const org = (profile as any).organizations
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${invitation.token}`
 
-  try {
-    const resend = new Resend(process.env.RESEND_API_KEY)
-    await resend.emails.send({
-      from: `${org.name} <onboarding@resend.dev>`,
-      to: email,
-      subject: `You've been invited to join ${org.name} on AscendHQ`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
-          <h2 style="color: #1a1f2e; margin-bottom: 8px;">You're invited!</h2>
-          <p style="color: #454d66; font-size: 14px; line-height: 1.6;">
-            ${profile.full_name ?? 'Your team'} has invited you to join <strong>${org.name}</strong> on AscendHQ as a <strong>${role}</strong>.
-          </p>
-          <div style="margin: 28px 0;">
-            <a href="${inviteUrl}" style="background: #1e3a5f; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">
-              Accept Invitation
-            </a>
-          </div>
-          <p style="color: #8891aa; font-size: 12px;">This invitation expires in 7 days. If you weren't expecting this, you can safely ignore it.</p>
+  const resend = new Resend(process.env.RESEND_API_KEY)
+  const { error: emailError } = await resend.emails.send({
+    from: `${org.name} <onboarding@resend.dev>`,
+    to: email,
+    subject: `You've been invited to join ${org.name} on AscendHQ`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
+        <h2 style="color: #1a1f2e; margin-bottom: 8px;">You're invited!</h2>
+        <p style="color: #454d66; font-size: 14px; line-height: 1.6;">
+          ${profile.full_name ?? 'Your team'} has invited you to join <strong>${org.name}</strong> on AscendHQ as a <strong>${role}</strong>.
+        </p>
+        <div style="margin: 28px 0;">
+          <a href="${inviteUrl}" style="background: #1e3a5f; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-block;">
+            Accept Invitation
+          </a>
         </div>
-      `,
-    })
-  } catch {
-    // Email failure shouldn't fail the invite creation
-    console.error('Failed to send invitation email')
+        <p style="color: #8891aa; font-size: 12px;">This invitation expires in 7 days. If you weren't expecting this, you can safely ignore it.</p>
+      </div>
+    `,
+  })
+
+  if (emailError) {
+    console.error('Resend error sending invitation email:', emailError)
+    return NextResponse.json({ error: 'Invitation created but email failed to send', emailError }, { status: 500 })
   }
 
   return NextResponse.json({ invitation })

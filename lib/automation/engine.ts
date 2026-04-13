@@ -126,9 +126,11 @@ async function sendAndLog(
     message: string
   }
 ): Promise<boolean> {
+  // TODO: Remove temp email override after domain verification
+  const to = params.toEmail === 'solutions@cmcomps.com' ? params.toEmail : 'solutions@cmcomps.com'
   const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? 'noreply@ascendhq.io',
-    to: params.toEmail,
+    from: 'AscendHQ <onboarding@resend.dev>',
+    to,
     subject: params.subject,
     html: buildEmailHtml(params.message, orgName),
   })

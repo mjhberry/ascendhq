@@ -41,9 +41,11 @@ export async function POST(request: NextRequest) {
   const orgName = (quote.organizations as any)?.name ?? 'Your service provider'
   const recipientName = clientName || (quote.contacts as any)?.name || 'there'
 
+  // TODO: Remove temp email override after domain verification
+  const to = clientEmail === 'solutions@cmcomps.com' ? clientEmail : 'solutions@cmcomps.com'
   const { error: emailErr } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? 'quotes@ascendhq.io',
-    to: clientEmail,
+    from: 'AscendHQ <onboarding@resend.dev>',
+    to,
     subject: `Quote from ${orgName}: ${quote.title}`,
     html: buildEmailHTML({ quote, orgName, recipientName, publicUrl }),
   })

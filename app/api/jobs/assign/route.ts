@@ -35,9 +35,11 @@ export async function PATCH(req: Request) {
       if (assignee?.email) {
         const resend = new Resend(process.env.RESEND_API_KEY)
         const org = (profile as any).organizations
+        // TODO: Remove temp email override after domain verification
+        const to = assignee.email === 'solutions@cmcomps.com' ? assignee.email : 'solutions@cmcomps.com'
         await resend.emails.send({
-          from: `${org.name} <onboarding@resend.dev>`,
-          to: assignee.email,
+          from: 'AscendHQ <onboarding@resend.dev>',
+          to,
           subject: `You've been assigned: ${job.title}`,
           html: `
             <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">

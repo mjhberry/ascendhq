@@ -45,6 +45,8 @@ export default function TeamSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [removeError, setRemoveError] = useState('')
+  const [reassignmentJobs, setReassignmentJobs] = useState<{ id: string; title: string }[]>([])
 
   const canManage = profile?.role === 'owner' || profile?.role === 'office'
 
@@ -128,12 +130,20 @@ export default function TeamSettingsPage() {
   async function confirmDelete() {
     if (!deleteTarget) return
     setDeleting(true)
-    const res = await fetch(`/api/team/members?id=${deleteTarget.id}`, { method: 'DELETE' })
-    if (res.ok) {
-      setMembers(prev => prev.filter(m => m.id !== deleteTarget.id))
+    setRemoveError('')
+    const res = await fetch(`/api/team/members/${deleteTarget.id}`, { method: 'DELETE' })
+    const data = await res.json()
+    if (!res.ok) {
+      setRemoveError(data.error ?? 'Failed to remove member')
+      setDeleting(false)
+      return
     }
+    setMembers(prev => prev.filter(m => m.id !== deleteTarget.id))
     setDeleteTarget(null)
     setDeleting(false)
+    if (data.unassignedJobs?.length) {
+      setReassignmentJobs(data.unassignedJobs)
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -388,22 +398,78 @@ export default function TeamSettingsPage() {
       {deleteTarget && (
         <div
           style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-          onClick={() => setDeleteTarget(null)}
+          onClick={() => { if (!deleting) { setDeleteTarget(null); setRemoveError('') } }}
         >
           <div
-            style={{ backgroundColor: 'white', borderRadius: 16, width: '100%', maxWidth: 380, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+            style={{ backgroundColor: 'white', borderRadius: 16, width: '100%', maxWidth: 400, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#1a1f2e' }}>Remove team member?</h3>
-            <p style={{ margin: '0 0 20px', fontSize: 13, color: '#454d66', lineHeight: 1.5 }}>
-              <strong>{deleteTarget.full_name}</strong> will lose access to {org?.name}. This cannot be undone.
+            <h3 style={{ margin: '0 0 8px', fontSize: 15, fontWeight: 700, color: '#1a1f2e' }}>
+              Remove {deleteTarget.full_name} from your team?
+            </h3>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#454d66', lineHeight: 1.5 }}>
+              They will lose access to {org?.name} immediately. This cannot be undone.
             </p>
+            {removeError && (
+              <div style={{ marginBottom: 14, padding: '9px 12px', borderRadius: 8, fontSize: 12, backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}>
+                {removeError}
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button onClick={() => setDeleteTarget(null)} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: '#f8f9fc', color: '#454d66', border: '1px solid #e8ebf4', cursor: 'pointer' }}>
+              <button
+                onClick={() => { setDeleteTarget(null); setRemoveError('') }}
+                disabled={deleting}
+                style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: '#f8f9fc', color: '#454d66', border: '1px solid #e8ebf4', cursor: 'pointer' }}
+              >
                 Cancel
               </button>
-              <button onClick={confirmDelete} disabled={deleting} style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: '#dc2626', color: 'white', border: 'none', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.6 : 1 }}>
-                {deleting ? 'Removing…' : 'Remove'}
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                style={{ padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: '#dc2626', color: 'white', border: 'none', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.6 : 1 }}
+              >
+                {deleting ? 'Removing…' : 'Remove Member'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reassignment warning — shown after a member is removed */}
+      {reassignmentJobs.length > 0 && (
+        <div
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setReassignmentJobs([])}
+        >
+          <div
+            style={{ backgroundColor: 'white', borderRadius: 16, width: '100%', maxWidth: 420, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+              <div style={{ fontSize: 22, flexShrink: 0 }}>⚠️</div>
+              <div>
+                <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 700, color: '#1a1f2e' }}>Jobs need reassignment</h3>
+                <p style={{ margin: 0, fontSize: 13, color: '#454d66', lineHeight: 1.5 }}>
+                  {reassignmentJobs.length} active job{reassignmentJobs.length !== 1 ? 's were' : ' was'} unassigned. Please reassign them in the Pipeline.
+                </p>
+              </div>
+            </div>
+            <div style={{ backgroundColor: '#f8f9fc', border: '1px solid #e8ebf4', borderRadius: 10, padding: '8px 12px', marginBottom: 18 }}>
+              {reassignmentJobs.map((job, i) => (
+                <div key={job.id} style={{
+                  fontSize: 12, color: '#454d66', padding: '4px 0',
+                  borderBottom: i < reassignmentJobs.length - 1 ? '1px solid #f2f4f9' : 'none',
+                }}>
+                  {job.title}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setReassignmentJobs([])}
+                style={{ padding: '8px 18px', borderRadius: 8, fontSize: 12, fontWeight: 600, backgroundColor: '#1e3a5f', color: 'white', border: 'none', cursor: 'pointer' }}
+              >
+                Got it
               </button>
             </div>
           </div>

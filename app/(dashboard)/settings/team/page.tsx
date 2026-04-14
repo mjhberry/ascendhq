@@ -53,7 +53,7 @@ export default function TeamSettingsPage() {
   useEffect(() => {
     if (!profile?.org_id) return
     fetchData()
-  }, [profile?.org_id])
+  }, [profile?.org_id, profile?.role])
 
   async function fetchData() {
     const [mRes, iRes] = await Promise.all([
@@ -62,6 +62,7 @@ export default function TeamSettingsPage() {
     ])
     const mData = await mRes.json()
     setMembers(mData.members ?? [])
+    console.log('fetchData called', { members: mData.members })
     if (iRes) {
       const iData = await iRes.json()
       setInvitations(iData.invitations ?? [])

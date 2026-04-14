@@ -75,11 +75,9 @@ export async function POST(req: Request) {
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${invitation.token}`
 
   const resend = new Resend(process.env.RESEND_API_KEY)
-  // TODO: Remove temp email override after domain verification
-  const to = email === 'solutions@cmcomps.com' ? email : 'solutions@cmcomps.com'
   const { error: emailError } = await resend.emails.send({
-    from: 'AscendHQ <onboarding@resend.dev>',
-    to,
+    from: 'AscendHQ <noreply@cmcomps.com>',
+    to: email,
     subject: `You've been invited to join ${org.name} on AscendHQ`,
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">

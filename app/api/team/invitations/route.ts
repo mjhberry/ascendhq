@@ -37,9 +37,11 @@ export async function POST(req: Request) {
   if (profile.role !== 'owner' && profile.role !== 'office') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
+  console.log('1. Auth passed', { userId: profile.id, orgId: profile.org_id })
 
   const { email, role } = await req.json()
   if (!email || !role) return NextResponse.json({ error: 'Missing email or role' }, { status: 400 })
+  console.log('2. Validation passed', { email, role })
 
   // Check if user is already a member
   const { data: existing } = await supabase
@@ -70,12 +72,14 @@ export async function POST(req: Request) {
     .single()
 
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 })
+  console.log('3. Invitation created', { invitationId: invitation.id, token: invitation.token })
 
   const org = (profile as any).organizations
   const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${invitation.token}`
 
   const resend = new Resend(process.env.RESEND_API_KEY)
-  const { error: emailError } = await resend.emails.send({
+  console.log('4. About to send email', { to: email, from: 'noreply@cmcomps.com' })
+  const { data: emailData, error: emailError } = await resend.emails.send({
     from: 'AscendHQ <noreply@cmcomps.com>',
     to: email,
     subject: `You've been invited to join ${org.name} on AscendHQ`,
@@ -94,6 +98,8 @@ export async function POST(req: Request) {
       </div>
     `,
   })
+
+  console.log('5. Resend response', { data: emailData, error: emailError })
 
   if (emailError) {
     console.error('Resend error sending invitation email:', emailError)

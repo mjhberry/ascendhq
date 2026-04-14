@@ -1,26 +1,18 @@
-import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import InviteSignup from './InviteSignup'
 
 export default async function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_APP_URL}/api/invite/${token}`,
+    { cache: 'no-store' }
   )
 
-  const { data: invitation } = await supabase
-    .from('invitations')
-    .select('*, organizations(name, industry)')
-    .eq('token', token)
-    .is('accepted_at', null)
-    .gt('expires_at', new Date().toISOString())
-    .single()
+  if (!res.ok) notFound()
 
-  if (!invitation) notFound()
-
-  const org = (invitation as any).organizations
+  const { invitation } = await res.json()
+  const org = invitation.organizations
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f2f4f9', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>

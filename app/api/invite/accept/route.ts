@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js'
-import { createServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
@@ -8,13 +7,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Use anon client to look up the invitation (no auth needed)
-  const anonSupabase = createClient(
+  // Use service role to bypass RLS — this route is unauthenticated
+  const adminSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  const { data: invitation, error: invErr } = await anonSupabase
+  // Look up invitation using service role (bypasses RLS)
+  const { data: invitation, error: invErr } = await adminSupabase
     .from('invitations')
     .select('*')
     .eq('token', token)
@@ -25,13 +26,6 @@ export async function POST(req: Request) {
   if (invErr || !invitation) {
     return NextResponse.json({ error: 'Invalid or expired invitation' }, { status: 400 })
   }
-
-  // Admin client to create auth user
-  const adminSupabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
 
   // Create auth user
   const { data: authData, error: authErr } = await adminSupabase.auth.admin.createUser({

@@ -31,7 +31,14 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const publicPaths = ['/login', '/onboarding']
+  const publicPaths = [
+    '/login',
+    '/onboarding',
+    '/invite',   // team invite acceptance pages
+    '/q',        // public quote pages
+    '/inv',      // public invoice pages
+    '/api/',     // all API routes handle their own auth
+  ]
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
   if (!user && !isPublic) {
